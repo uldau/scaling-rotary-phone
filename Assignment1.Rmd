@@ -1,0 +1,615 @@
+---
+title: "Assignment 1"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Task 1
+
+What is the medically relevant insight from the article? Mobile element
+variants (MEVs) significantly contribute to diversification of the human
+genome, gene regulation and disease risk. Specific MEVs such as Alu,
+LINE-1 (L1) and SINE-VNTR-Alu (SVA) show population-specific
+distributions and take part in regulating tissue-specific gene
+expression. MEVs can be more strongly associated with gene expression
+changes than single-nucleotide variants, which suggests that it is
+possible for them to drive phenotypic traits, including disease
+susceptibilities. One L1 insertion in this dtudy was linked to an
+increased risk for keloid formation and fasciitis
+
+Which genomics technology/ technologies were used? Short-read
+whole-genome sequencing (WGS) mobile element genotype analysis
+environment (MEGAnE) (bioinformatic tool enabling discovery and
+genotyping of ME insertions and absences)
+
+Three questions/ hypothesis to extend the analysis presented in the
+paper How do MEVs impact polygenic disease risks in different
+populations? What roles do MEVs play in epigenetic regulation snd
+chromativ state remodeling? Can MEVs be utilized as biomarkers for
+predicitng susceptibility to specific cimplex traits or diseases?
+
+------------------------------------------------------------------------
+
+Task 4
+
+Load the CO2 dataset into R and display the content of it with the
+help() function
+
+```{r}
+# Loading the CO2 dataset
+data(CO2)
+# Accessing description of the CO2 dataset using the help function
+help(CO2)
+```
+
+The dataset contains data about CO2 uptake (μmol/m\^2 sec) of 6
+different plants in two different temperature conditions (nonchilled and
+chilled) and two different geological locations (Quebec and Canada). It
+also contains information about the ambient CO2 concentration in mL/L.
+
+Creating subsets of the data and calculating the average and median
+
+```{r}
+# Creating subsets of the dataset
+Quebec <- subset(CO2, CO2$Type=="Quebec")
+Mississippi <- subset(CO2, CO2$Type=="Mississippi")
+
+# Calculating the average and median of the subdatasets
+average_Quebec <- mean(Quebec$uptake)
+average_Quebec
+
+average_Mississippi <- mean(Mississippi$uptake)
+average_Mississippi
+
+median_Quebec <- median(Quebec$uptake)
+median_Quebec
+
+median_Mississippi <- median(Mississippi$uptake)
+median_Mississippi
+```
+
+The average CO2 uptake in Quebec is 33.543μmol/m\^2 sec and the mean
+37.15μmol/m\^2 sec. The average Co2 uptake in Mississippi is
+20.883μmol/m\^2 sec and the mean 19.3μmol/m\^2 sec. '
+
+Load and display "airway" data from bioconductor and counting the
+expressed genes per sample as well as how many genes were not expressed
+in general
+
+```{r}
+# Load and display airway data from Bioconductor
+library(airway)
+library(dbplyr)  # used for data manipulation
+library(SummarizedExperiment) # useful when handling complex datasets in a more organized way
+
+data("airway")
+airway_se <- airway  # stored as a SummarizedExperiment object
+
+# Counting the number of expressed genes, based on the assumption it's genes with a count greater than 0
+# Extracting the counts matrix
+counts_matrix <- assay(airway_se)
+
+# Counting the number of genes that are expressed (count > 0) for each sample
+expressed_genes_per_sample <- apply(counts_matrix, 2, function(x) sum(x > 0))  # The function apply (...,2,...) applies to each column of the count matrix, sum (x < 0) counts how many genes in one column (one sample) have an expression above 0
+expressed_genes_per_sample
+
+# Counting the number of genes that are not expressed (count == 0)
+genes_not_expressed <- sum(rowSums(counts_matrix) == 0) # Counts how many genes are not expressed in any of the samples (not column (sample) specific) 
+genes_not_expressed
+
+```
+
+Expressed genes per sample: SRR1039508 SRR1039509 SRR1039512 SRR1039513
+SRR1039516 SRR1039517 SRR1039520 SRR1039521 24633 24527 25699 23124
+25508 25998 24662 23991
+
+Number of genes that are not expressed: 30208
+
+------------------------------------------------------------------------
+
+Task 5
+
+Function to calculate the ratio of the mean and the median of a dataset.
+
+```{r}
+# Function to calculate the ratio of the mean and the median
+mean_median_ratio <- function(x) {
+  # Checking that input is numeric
+  if (!is.numeric(x)) {
+    stop("Input vector must be numeric.")
+  }
+  
+  # Calculating the mean value
+  mean_value <- mean(x, na.rm = TRUE)
+  
+  # Calculating the median
+  median_value <- median(x, na.rm = TRUE)
+  
+  # Calculating the ratio of the mean to the median
+  ratio <- mean_value/median_value
+  
+  # Return the ratio
+  return(ratio)
+}
+```
+
+Function to calculate the mean excluding the highest and the lowest
+value
+
+```{r}
+# Function to ignore lowest and highest value and calculates the mean
+mean_without_extremes <- function(x) {
+  # Checking that input is numeric
+  if(!is.numeric(x)) {
+    stop("Input vector must be numeric.")
+  }
+  
+  # Input needs to have more than 2 values, otherwise it would return empty
+  if (length(x) <= 2) {
+    stop("Input vector must contain more than two elements.")
+  }
+  
+  # Removing smallest and highest values
+  x_filtered <- x[x != min(x) & x != max(x)]
+  
+  # Calculating the mean of the remaining values
+  mean_value <- mean(x_filtered, na.rm = TRUE)
+  
+  # Return the mean
+  retun(mean_value)
+}
+```
+
+If the highest or lowest value is present more then once in a dataset
+this is a function which will only take out the value once
+
+```{r}
+# Alternative function if highest or lowest values occurs more then once. This will only remove the value once (the function above will remove all occurences of the minimum and maximum values)
+mean_without_extremes_single <- function(x) {
+  # Checking that input is numeric
+  if(!is.numeric(x)) {
+    stop("Input vector must be numeric.")
+  }
+  
+  # Input needs to have more than 2 values, otherwise it would return empty
+  if (length(x) <= 2) {
+    stop("Input vector must contain more than two elements.")
+  }
+  
+  # Remove only one instance of the smallest and highest value
+  x_filtered_single <- x[-which.min(x)]
+  x_filtered_single <- x_filtered_single[-which.max(x_filtered_single)]
+  
+  # Calculating the mean of the remaining values
+  mean_value_single <- mean(x_filtered_single, na.rm = TRUE)
+  
+  # Return the mean
+  return(mean_value_single)
+}
+```
+
+Piping chains commands/functions, passes output as input, reducing
+intermediate variables. It improves readability and organizes code
+linearly. However, for complex transformations or multiple
+inputs/outputs, avoiding pipes can make code easier to follow.
+
+The apply family (apply, lapply, sapply, tapply, etc) simplifies
+repetitive tasks by applying functions to elements of data structures
+like lists, matrices, or vectors. It reduces code complexity and avoids
+loops, making operations faster and code easier to read. Useful for data
+manipulation.
+
+------------------------------------------------------------------------
+
+Task 6
+
+Comparing the body heights distribution for the two species of the magic
+guys dataset
+
+```{r}
+#Loading the required packages and the dataset
+library(ggplot2)
+library(readr)
+
+magic_guys <- read_csv("magic_guys.csv")
+```
+
+Histograms for length of the two species
+
+```{r}
+jedi <- magic_guys$length[magic_guys$species == "jedi"]
+sith <- magic_guys$length[magic_guys$species == "sith"]
+
+# Histogram for jedi
+hist(jedi, breaks = 20, col = rgb(0.2, 0.4, 0.6, 0.7), main = "Jedi Body Height Distribution", xlab = "Body Height", ylab = "Number of Observations")
+
+# Histogram for sith
+hist(sith, breaks = 20, col = rgb(0.8, 0.3, 0.4, 0.7), main = "Sith Body Height Distribution", xlab = "Body Height", ylab = "Number of Observations")
+
+# ggplot histogram
+ggplot(magic_guys, aes(x = length, fill = species)) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 20) +
+  labs(title = "Body Height Distribution for Two Species", x = "Body Height", y = "Number of Observations") +
+  theme_minimal()
+
+## optimize ggplot (e.g. different breaks, stacked bars, etc.)
+ggplot(magic_guys, aes(x = length, fill = species)) +
+  
+  # Thinner bars with dodge positioning to add space between them and shift the Sith bars slightly
+  geom_histogram(position = "stack", alpha = 0.7, bins = 40, 
+                 aes(y = after_stat(count)), color = "black", width = 0.2) +
+  
+  # Labels
+  labs(
+    title = "Body Height Distribution: Jedi vs. Sith",
+    x = "Body Height",
+    y = "Number of Individuals",  # Change y-axis label
+    fill = "Order"  # Rename legend title
+  ) +
+  
+  # Star Wars themed neon colors for Jedi (neon blue) and Sith (neon red)
+  scale_fill_manual(
+    values = c(
+      "jedi" = "#00FFFF",  # Neon blue for Jedi
+      "sith" = "#FF4500"   # Neon red for Sith
+    ),
+    labels = c(
+      "jedi" = "Jedi",
+      "sith" = "Sith"
+    )
+  ) +
+  
+  # Customize the y-axis to display even numbers, from 0 to 8
+  scale_y_continuous(limits = c(0, 9), breaks = seq(0, 10, by = 2)) + 
+  
+  # Star Wars themed plot design
+  theme_minimal() +
+  theme(
+    legend.position = "top",  # Place legend on top
+    legend.title = element_text(face = "bold", color = "white"),  # Bold white legend title
+    legend.text = element_text(size = 12, color = "white"),  # White legend text
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5, color = "yellow"),  # Yellow Star Wars title
+    plot.background = element_rect(fill = "black"),  # Black background for Star Wars theme
+    panel.background = element_rect(fill = "black"),  # Black panel background
+    axis.text = element_text(color = "white"),  # White axis text
+    axis.title = element_text(color = "white"),  # White axis labels
+    axis.ticks = element_line(color = "white"),  # White axis ticks
+    panel.grid = element_line(color = "gray")  # Gray grid lines
+  )
+
+```
+
+Boxplot to display length of the two species
+
+```{r}
+jedi <- magic_guys$length[magic_guys$species == "jedi"]
+sith <- magic_guys$length[magic_guys$species == "sith"]
+
+# Basic boxplot
+boxplot(length ~ species, data = magic_guys, main = "Body Height Comparison", ylab = "Body Height", col = c("lightgrey", "pink"))
+
+# ggplot boxplot
+ggplot(magic_guys, aes(x = species, y = length, fill = species)) +
+  geom_boxplot(notch=TRUE) +
+  labs(title = "Body Height Comparison Between Species", x = "Species", y = "Body Height") +
+  theme_minimal()
+
+## optimize ggplot
+# Create the boxplot with custom Star Wars theme
+ggplot(magic_guys, aes(x = species, y = length, fill = species)) +
+  # Boxplot with custom color settings
+  geom_boxplot(
+    notch = TRUE, 
+    color = "grey90",  # Box outline color (medium grey)
+    lwd = 0.7,        # Line width of the box outline
+    alpha = 0.9      # 90% opacity for the fill colors
+  ) +
+  
+  # Add title and axis labels
+  labs(title = "Body Height Comparison Between Jedi and Sith", x = "Species", y = "Body Height") +
+  
+  # Custom fill colors for Jedi (neon blue) and Sith (neon red)
+  scale_fill_manual(
+    values = c(
+      "jedi" = "#00FFFF",  # Neon blue for Jedi
+      "sith" = "#FF4500"   # Neon red for Sith
+    )
+  ) +
+  
+  # Rename "jedi" to "Jedi" and "sith" to "Sith" directly in ggplot
+  scale_x_discrete(
+    labels = c("jedi" = "Jedi", "sith" = "Sith")
+  ) +
+  
+  # Custom theme for Star Wars look
+  theme_minimal() +
+  theme(
+    legend.position = "none",  # Hide legend
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5, color = "yellow", margin = margin(b = 20)),  # Yellow title with space below
+    plot.background = element_rect(fill = "black"),  # Black background
+    panel.background = element_rect(fill = "black"),  # Black panel background
+    axis.text = element_text(color = "white", size = 14),  # White axis text
+    axis.title = element_text(color = "white", size = 14),  # White axis labels, same size as "Species"
+    axis.ticks = element_line(color = "white"),  # White axis ticks
+    panel.grid.major.x = element_blank(),  # Remove vertical major grid lines
+    panel.grid.minor.x = element_blank(),  # Remove vertical minor grid lines
+    panel.grid.major.y = element_line(color = "gray"),  # Keep horizontal grid lines
+    panel.grid.minor.y = element_blank(),  # Remove minor horizontal grid lines
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10)  # Add more space between title and plot
+  )
+
+
+```
+
+Save output as png, pdf and svg
+
+```{r}
+library(svglite)
+
+# Save in PNG format
+ggsave("height_comparison.png", plot = last_plot(), width = 7, height = 5)
+
+# Save in PDF format
+ggsave("height_comparison.pdf", plot = last_plot(), width = 7, height = 5)
+
+# Save in SVG format
+ggsave("height_comparison.svg", plot = last_plot(), width = 7, height = 5)
+```
+
+Figures that are used on the web or have many colors are best saved in a
+png format. Pdf formats are best used for high-quality prints, vector
+based graphics and are scalable. Figures/ graphics that will be embedded
+in web pages and should be scalable are best saved in an svg format
+(it's a vector based format).
+
+Microarray dataset
+
+```{r}
+# Load the data
+microarray_data <- read.delim("microarray_data.tab", sep = "\t", header = TRUE)
+
+# Check the size (rows and columns)
+dim(microarray_data)  # This returns the number of rows and columns
+```
+
+The dataset has 553 rows and 1000 columns.
+
+Missing values per gene (with vizualisation)
+
+```{r}
+# Count missing values per gene
+missing_counts <- apply(microarray_data, 1, function(x) sum(is.na(x)))
+
+# Visualize missing values
+library(ggplot2)
+ggplot(data.frame(gene = rownames(microarray_data), missing_count = missing_counts), aes(x = gene, y = missing_count)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  labs(title = "Missing Values per Gene", x = "Genes", y = "Missing Values")
+```
+
+Identify genes with specific missing values
+
+```{r}
+# Set percentage thresholds
+threshold_10 <- 0.1 * ncol(microarray_data)
+threshold_20 <- 0.2 * ncol(microarray_data)
+threshold_50 <- 0.5 * ncol(microarray_data)
+
+# Filter genes with more than X% missing values
+genes_10_percent <- which(missing_counts > threshold_10)
+genes_20_percent <- which(missing_counts > threshold_20)
+genes_50_percent <- which(missing_counts > threshold_50)
+
+# Display the genes
+genes_10_percent
+genes_20_percent
+genes_50_percent
+
+# Replacing missing values with the avarage expression for each gene
+# Replace missing values with the mean per gene
+microarray_data_imputed <- microarray_data  # Create a copy
+microarray_data_imputed[] <- apply(microarray_data_imputed, 1, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x))
+```
+
+Now `microarray_data_imputed` contains the imputed data
+
+Visualization of CO2 dataset with the goal of gaining deeper inside
+
+```{r}
+# Load CO2 dataset
+data("CO2")
+
+# Plotting CO2 uptake by Plant type
+ggplot(CO2, aes(x = Type, y = uptake, fill = Treatment)) +
+  geom_boxplot() +
+  labs(title = "CO2 Uptake by Plant Type and Treatment", x = "Plant Location", y = "CO2 Uptake") +
+  theme_minimal()
+
+# Scatter plot to see the effect of concentration on CO2 uptake
+ggplot(CO2, aes(x = conc, y = uptake, color = Treatment)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Effect of CO2 Concentration on Uptake", x = "CO2 Concentration", y = "CO2 Uptake") +
+  theme_minimal()
+
+
+# Scatter plot for the four specific groups: Nonchilled/Chilled & Quebec/Mississippi
+# Check the interaction levels
+interaction(CO2$Type, CO2$Treatment)
+
+# Create the updated scatter plot
+ggplot(CO2, aes(x = conc, y = uptake, fill = interaction(Type, Treatment), color = interaction(Type, Treatment))) +
+  
+  # Smoothed regression line without standard error, matching the colors of points
+  geom_smooth(method = "lm", se = TRUE, size = 1, show.legend = FALSE) +
+  
+  # Scatter plot with black outline layered above the regression lines and standard error margin
+  geom_point(shape = 21, size = 2, alpha = 0.7, stroke = 1, color = "black") +  # Scatter plot with black outline
+  
+  labs(
+    title = "CO2 Uptake Patterns for Different Plant Types and Treatments",
+    x = "CO2 Concentration",
+    y = "CO2 Uptake",
+    fill = "Plant Type & Treatment"
+  ) +
+  theme_minimal() +
+  
+  # Custom colors for each category, with specified order
+  scale_fill_manual(
+    values = c(
+      "Quebec.nonchilled" = "darkorchid",      
+      "Quebec.chilled" = "violetred",     
+      "Mississippi.nonchilled" = "seagreen2", 
+      "Mississippi.chilled" = "springgreen4"
+    ),
+    labels = c(
+      "Quebec.nonchilled" = "Quebec nonchilled",
+      "Quebec.chilled" = "Quebec chilled",
+      "Mississippi.nonchilled" = "Mississippi nonchilled",
+      "Mississippi.chilled" = "Mississippi chilled"
+    ),
+    limits = c("Quebec.nonchilled", "Quebec.chilled", "Mississippi.nonchilled", "Mississippi.chilled")  # Ensure the legend order
+  ) +
+  
+  # Matching color scale for regression lines, with the same order
+  scale_color_manual(
+    values = c(
+      "Quebec.nonchilled" = "darkorchid",      
+      "Quebec.chilled" = "violetred",     
+      "Mississippi.nonchilled" = "seagreen2", 
+      "Mississippi.chilled" = "springgreen4"
+    ),
+    limits = c("Quebec.nonchilled", "Quebec.chilled", "Mississippi.nonchilled", "Mississippi.chilled")  # Ensure the legend order
+  ) +
+  
+  # Remove the color legend for the regression line and set up square symbols for the points
+  guides(
+    fill = guide_legend(
+      override.aes = list(shape = 22, size = 5, color = "black", stroke = 1),
+      order = 1  # Ensures that the legend is ordered correctly
+    ),
+    color = "none"  # Hide the separate color legend for smoothed lines
+  ) +
+  
+  # Adjust the distance between the axis titles and ticks
+  theme(
+    axis.title.x = element_text(margin = margin(t = 10)),
+    axis.title.y = element_text(margin = margin(r = 10))
+  )
+```
+
+The CO2 uptake of the plants in Quebec is higher then in Mississippi. In
+both locations plants that are not treated (nonchilled) have a higher
+CO2 uptake. With increasing CO2 concentration the CO2 uptake increases
+as well.
+
+------------------------------------------------------------------------
+
+Task 7
+
+```{r}
+# Load the tidyverse and tidybiology packages
+library(tidyverse)
+library(tidybiology)
+
+# Load the chromosome data
+data("chromosome")
+
+# Extract summary statistics
+summary_stats <- chromosome %>%
+  summarise(
+    mean_variations = mean(variations, na.rm = TRUE),
+    median_variations = median(variations, na.rm = TRUE),
+    max_variations = max(variations, na.rm = TRUE),
+    
+    mean_protein_coding_genes = mean(protein_codinggenes, na.rm = TRUE),
+    median_protein_coding_genes = median(protein_codinggenes, na.rm = TRUE),
+    max_protein_coding_genes = max(protein_codinggenes, na.rm = TRUE),
+    
+    mean_mi_rna = mean(mi_rna, na.rm = TRUE),
+    median_mi_rna = median(mi_rna, na.rm = TRUE),
+    max_mi_rna = max(mi_rna, na.rm = TRUE)
+  )
+  
+# Display the summary data
+summary_stats
+```
+
+Mean Variations = 6484572 Median Variations = 6172346 Max Variations =
+12945965
+
+Mean Protein-coding genes = 850 Median Protein-coding genes = 836 Max
+Protein-coding genes = 2058
+
+Mean miRNA = 73.2 Median miRNA = 75 Max miRNA = 134
+
+Distribution of chromosome size
+
+```{r}
+# Bar plot
+ggplot(chromosome, aes(x = id, y = length_mm)) +
+  geom_bar(stat = "identity", fill = "lightblue", color = "black") +
+  labs(title = "Chromosome size distribution", x = "Chromosome ID", y = "Chromosome length in mm") +
+  theme_minimal()
+
+# Correlation between protein coding genes and miRNAs with chromosome length
+# Chromosome length and protein coding genes
+ggplot(chromosome, aes(x = length_mm, y = protein_codinggenes)) +
+  geom_point(color = "darkgreen", alpha = 0.8) +
+  geom_smooth(method = "lm", color = "violet", se = TRUE) +
+  labs(title = "Chromosome Size vs Protein Coding Genes", x = "Chromosome lenght in mm", y = "Protein coding genes") +
+  theme_minimal()
+  
+# Chromosome length and miRNA
+ggplot(chromosome, aes(x = length_mm, y = mi_rna)) +
+  geom_point(color = "forestgreen", alpha = 0.8) +
+  geom_smooth(method = "lm", color = "orange", se = TRUE) +
+  labs(title = "Chromosome Size vs miRNAs", x = "Chromosome lenght in mm", y = "miRNAs") +
+  theme_minimal()
+
+```
+
+There is a weak positive correlation both for protein coding genes and
+miRNAs with chromosome length.
+
+Summary statistics for protein dataset
+
+```{r}
+# Load protein data
+data("proteins")
+
+# Summary statistics for length and mass
+summary_stats_proteins <- proteins %>%
+  summarize(
+    mean_length = mean(length, na.rm = TRUE),
+    median_length = median(length, na.rm = TRUE),
+    max_length = max(length, na.rm = TRUE),
+    
+    mean_mass = mean(mass, na.rm = TRUE),
+    median_mass = median(mass, na.rm = TRUE),
+    max_mass = max(mass, na.rm = TRUE)
+  )
+
+# Display the summary statistics
+summary_stats_proteins
+```
+
+mean length / median length / max length 557 414 34350\
+mean mass / median mass / max mass 62061 46140 3816030
+
+Plot to visualize length and mass relationship of protein dataset
+
+```{r}
+# Scatter plot of length vs. mass with enhanced visualization
+ggplot(proteins, aes(x = length, y = mass)) +
+  geom_point(color = "darkblue", alpha = 0.6, size = 2) +
+  geom_smooth(method = "lm", color = "orange", se = TRUE, linetype = "dashed") +
+  labs(title = "Relationship between Protein Length and Mass", x = "Protein Length (aa)", y = "Protein Mass (Da)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+```
